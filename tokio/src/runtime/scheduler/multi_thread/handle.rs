@@ -32,6 +32,7 @@ pub(crate) struct Handle {
 
 impl Handle {
     /// Spawns a future onto the thread pool
+    /// tokio::spawn => 多线程模式下运行非阻塞任务
     pub(crate) fn spawn<F>(me: &Arc<Self>, future: F, id: task::Id) -> JoinHandle<F::Output>
     where
         F: crate::future::Future + Send + 'static,
@@ -49,8 +50,12 @@ impl Handle {
         T: Future + Send + 'static,
         T::Output: Send + 'static,
     {
+        // handle 就是 JoinHandle
         let (handle, notified) = me.shared.owned.bind(future, me.clone(), id);
 
+        // 如果task被关闭了 => notified就是None，忽略之
+        // 如果task没有被关闭 =>就把task放到非阻塞任务，安排后台运行？？
+        // TODO 没理解透 
         me.schedule_option_task_without_yield(notified);
 
         handle

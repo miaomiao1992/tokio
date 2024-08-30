@@ -417,6 +417,7 @@ impl Context {
 
 impl Handle {
     /// Spawns a future onto the `CurrentThread` scheduler
+    /// tokio::spawn => 单线程模式下运行非阻塞任务
     pub(crate) fn spawn<F>(
         me: &Arc<Self>,
         future: F,

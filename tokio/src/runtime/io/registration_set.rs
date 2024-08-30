@@ -61,6 +61,7 @@ impl RegistrationSet {
         let ret = Arc::new(ScheduledIo::default());
 
         // Push a ref into the list of all resources.
+        // 没搞懂为什么用个链表
         synced.registrations.push_front(ret.clone());
 
         Ok(ret)

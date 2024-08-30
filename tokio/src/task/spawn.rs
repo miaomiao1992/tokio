@@ -160,6 +160,7 @@ cfg_rt! {
     /// ```text
     /// error[E0391]: cycle detected when processing `main`
     /// ```
+    /// tokio::spwan => 生成非阻塞任务
     #[track_caller]
     pub fn spawn<F>(future: F) -> JoinHandle<F::Output>
     where
@@ -175,6 +176,7 @@ cfg_rt! {
         }
     }
 
+    /// tokio::spwan => 生成非阻塞任务
     #[track_caller]
     pub(super) fn spawn_inner<T>(future: T, name: Option<&str>) -> JoinHandle<T::Output>
     where
@@ -194,10 +196,18 @@ cfg_rt! {
                 target_arch = "x86_64"
             )
         ))]
+        //只有开启unstable特性才行，非关键代码，先跳过
         let future = task::trace::Trace::root(future);
+
+        // AtomicU64不断地加1
+        // 会有溢出风险吗？
+        // 比如服务器不停机运行，tcp请求达到u64上限？
         let id = task::Id::next();
         let task = crate::util::trace::task(future, "task", name, id.as_u64());
 
+        // Handle分两类
+        // CurrentThread(Arc<current_thread::Handle>)
+        // MultiThread(Arc<multi_thread::Handle>)
         match context::with_current(|handle| handle.spawn(task, id)) {
             Ok(join_handle) => join_handle,
             Err(e) => panic!("{}", e),

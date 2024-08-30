@@ -164,6 +164,7 @@ impl TcpListener {
             .async_io(Interest::READABLE, || self.io.accept())
             .await?;
 
+        // 把stream注册到driver
         let stream = TcpStream::new(mio)?;
         Ok((stream, addr))
     }

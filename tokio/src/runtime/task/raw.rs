@@ -217,6 +217,7 @@ impl RawTask {
     /// is the future stored by the task.
     pub(super) unsafe fn try_read_output(self, dst: *mut (), waker: &Waker) {
         let vtable = self.header().vtable;
+        // 虚表大法，具体是如何实现的？
         (vtable.try_read_output)(self.ptr, dst, waker);
     }
 

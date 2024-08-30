@@ -113,9 +113,15 @@ impl Inner {
             return;
         }
 
+        // 只有一个线程会抢到driver
+        // 抢到driver的线程，会执行mio Poll 的poll方法
+        // 然后对读写事件进行处理
+        // 这样设计能有效避免线程竞争造成资源浪费，防止“惊群”
         if let Some(mut driver) = self.shared.driver.try_lock() {
             self.park_driver(&mut driver, handle);
         } else {
+            // 没有抢到driver的线程，会进入阻塞状态，休眠
+            // 等待被抢到driver的线程唤醒
             self.park_condvar();
         }
     }

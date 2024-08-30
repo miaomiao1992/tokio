@@ -345,6 +345,7 @@ impl Runtime {
 
         match &self.scheduler {
             Scheduler::CurrentThread(exec) => exec.block_on(&self.handle.inner, future),
+            // 多线程模式
             #[cfg(feature = "rt-multi-thread")]
             Scheduler::MultiThread(exec) => exec.block_on(&self.handle.inner, future),
             #[cfg(all(tokio_unstable, feature = "rt-multi-thread"))]

@@ -6,7 +6,7 @@ name = "tokio"
 #   - README.md
 # - Update CHANGELOG.md.
 # - Create "v1.x.y" git tag.
-version = "1.38.0"
+version = "1.38.1"
 edition = "2021"
 rust-version = "1.63"
 authors = ["Tokio Contributors <team@tokio.rs>"]
@@ -23,7 +23,8 @@ keywords = ["io", "async", "non-blocking", "futures"]
 
 [features]
 # Include nothing by default
-default = []
+# 为了ide源码能跳转，临时开启所有特性
+default = ["full"]
 
 # enable everything
 full = [

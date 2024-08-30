@@ -179,7 +179,7 @@ impl Default for ScheduledIo {
     fn default() -> ScheduledIo {
         ScheduledIo {
             linked_list_pointers: UnsafeCell::new(linked_list::Pointers::new()),
-            readiness: AtomicUsize::new(0),
+            readiness: AtomicUsize::new(0),//0代表什么？？
             waiters: Mutex::new(Waiters::default()),
         }
     }
@@ -296,6 +296,8 @@ impl ScheduledIo {
 
             drop(waiters);
 
+            // wakers内部存储的数据形式是个数组
+            // unsafe方法更高效，没有边界检查
             wakers.wake_all();
 
             // Acquire the lock again.
@@ -511,6 +513,8 @@ impl Future for Readiness<'_> {
                     // Not ready even after locked, insert into list...
 
                     // Safety: called while locked
+                    // 主线程调用poll，注入此处的waker
+                    // 传到waiter内部，再传入waiters
                     unsafe {
                         (*waiter.get()).waker = Some(cx.waker().clone());
                     }

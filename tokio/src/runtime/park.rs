@@ -268,12 +268,15 @@ impl CachedParkThread {
         CURRENT_PARKER.try_with(|inner| f(inner))
     }
 
+    //多线程模式下主线程阻塞运行
     pub(crate) fn block_on<F: Future>(&mut self, f: F) -> Result<F::Output, AccessError> {
         use std::task::Context;
         use std::task::Poll::Ready;
 
         let waker = self.waker()?;
         let mut cx = Context::from_waker(&waker);
+        //通过poll方法把waker包装到cx内部，主线程root future所有child future在调用await/poll方法时，注入waker
+        //再由executor唤醒
 
         pin!(f);
 
@@ -282,6 +285,7 @@ impl CachedParkThread {
                 return Ok(v);
             }
 
+            // 由executor唤醒？
             self.park();
         }
     }

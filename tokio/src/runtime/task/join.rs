@@ -323,8 +323,13 @@ impl<T> Unpin for JoinHandle<T> {}
 impl<T> Future for JoinHandle<T> {
     type Output = super::Result<T>;
 
+    /// 这里是关键代码！！！
+    /// 如何获取非阻塞任务的运行结果返回值？？？
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        // 防御式编程
+        // 如果cx状态为Pending => 立即返回
         ready!(crate::trace::trace_leaf(cx));
+
         let mut ret = Poll::Pending;
 
         // Keep track of task budget

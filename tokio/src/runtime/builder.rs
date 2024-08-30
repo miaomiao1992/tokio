@@ -694,7 +694,9 @@ impl Builder {
     /// ```
     pub fn build(&mut self) -> io::Result<Runtime> {
         match &self.kind {
+            // 单线程模式
             Kind::CurrentThread => self.build_current_thread_runtime(),
+            // NOTES 多线程模式
             #[cfg(feature = "rt-multi-thread")]
             Kind::MultiThread => self.build_threaded_runtime(),
             #[cfg(all(tokio_unstable, feature = "rt-multi-thread"))]
@@ -1252,11 +1254,15 @@ cfg_rt_multi_thread! {
             let (driver, driver_handle) = driver::Driver::new(self.get_cfg(core_threads))?;
 
             // Create the blocking pool
+            // 阻塞任务线程池
             let blocking_pool =
                 blocking::create_blocking_pool(self, self.max_blocking_threads + core_threads);
             let blocking_spawner = blocking_pool.spawner().clone();
 
             // Generate a rng seed for this runtime.
+            // TODO 有什么用 ？？？先放在一边，后期再来阅读！！！
+            // 内部是 Mutex<FastRand>
+            // 并发安全的随机数生成器
             let seed_generator_1 = self.seed_generator.next_generator();
             let seed_generator_2 = self.seed_generator.next_generator();
 
@@ -1281,9 +1287,12 @@ cfg_rt_multi_thread! {
             );
 
             let handle = Handle { inner: scheduler::Handle::MultiThread(handle) };
-
+            
             // Spawn the thread pool workers
+            // 单例模式
             let _enter = handle.enter();
+            
+            // 启动非阻塞任务线程池
             launch.launch();
 
             Ok(Runtime::from_parts(Scheduler::MultiThread(scheduler), handle, blocking_pool))

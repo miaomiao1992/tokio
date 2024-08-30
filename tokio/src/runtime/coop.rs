@@ -172,6 +172,7 @@ cfg_coop! {
     /// Therefore, if the budget is _further_ adjusted between when `poll_proceed` returns and
     /// `RestRestoreOnPending` is dropped, those adjustments are erased unless the caller indicates
     /// that progress was made.
+    /// TODO 没看懂！！！
     #[inline]
     pub(crate) fn poll_proceed(cx: &mut Context<'_>) -> Poll<RestoreOnPending> {
         context::budget(|cell| {
@@ -179,11 +180,14 @@ cfg_coop! {
 
             let decrement = budget.decrement();
 
+            // success为true，意味着poll task没有达到Budget阈值
             if decrement.success {
                 let restore = RestoreOnPending(Cell::new(cell.get()));
                 cell.set(budget);
 
                 // avoid double counting
+                // 这里明明是空函数
+                // TODO ???
                 if decrement.hit_zero {
                     inc_budget_forced_yield_count();
                 }

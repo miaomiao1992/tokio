@@ -581,6 +581,7 @@ impl Context {
         *self.core.borrow_mut() = Some(core);
 
         // Run the task
+        // loop内部代码只能跑128次？？？
         coop::budget(|| {
             task.run();
             let mut lifo_polls = 0;
@@ -610,6 +611,9 @@ impl Context {
                     }
                 };
 
+                // Budegt内部的128是否大于0
+                // 大于0 => true
+                // 等于0 => false
                 if !coop::has_budget_remaining() {
                     core.stats.end_poll();
 
@@ -645,6 +649,8 @@ impl Context {
                 // Run the LIFO task, then loop
                 *self.core.borrow_mut() = Some(core);
                 let task = self.worker.handle.shared.owned.assert_owner(task);
+                // 对tokio::spawn传入的异步非阻塞future任务
+                // 进行一次poll操作
                 task.run();
             }
         })
@@ -692,6 +698,7 @@ impl Context {
     /// Also, we rely on the workstealing algorithm to spread the tasks amongst workers
     /// after all the IOs get dispatched
     fn park(&self, mut core: Box<Core>) -> Box<Core> {
+        // 运行before_park回调函数
         if let Some(f) = &self.worker.handle.shared.config.before_park {
             f();
         }
@@ -710,6 +717,7 @@ impl Context {
             }
         }
 
+        // 运行after_unpark回调函数
         if let Some(f) = &self.worker.handle.shared.config.after_unpark {
             f();
         }
@@ -740,6 +748,7 @@ impl Context {
         // Place `park` back in `core`
         core.park = Some(park);
 
+        // 这里没搞懂，唤醒什么
         if core.should_notify_others() {
             self.worker.handle.notify_parked_local();
         }
@@ -1054,7 +1063,9 @@ impl Handle {
         }
     }
 
+    /// 后台运行非阻塞任务？？？
     fn schedule_local(&self, core: &mut Core, task: Notified, is_yield: bool) {
+        // TODO 这里发生了什么？？？
         core.stats.inc_local_schedule_count();
 
         // Spawning from the worker thread. If scheduling a "yield" then the

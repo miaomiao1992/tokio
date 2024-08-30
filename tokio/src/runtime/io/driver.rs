@@ -137,6 +137,7 @@ impl Driver {
         }
     }
 
+    // 处理io事件
     fn turn(&mut self, handle: &Handle, max_wait: Option<Duration>) {
         debug_assert!(!handle.registrations.is_shutdown(&handle.synced.lock()));
 
@@ -212,6 +213,8 @@ impl Handle {
     /// Registers an I/O resource with the reactor for a given `mio::Ready` state.
     ///
     /// The registration token is returned.
+    /// 专门用于注册读写io事件
+    /// 比如新建一个TcpListener
     pub(super) fn add_source(
         &self,
         source: &mut impl mio::event::Source,
@@ -222,6 +225,7 @@ impl Handle {
 
         // we should remove the `scheduled_io` from the `registrations` set if registering
         // the `source` with the OS fails. Otherwise it will leak the `scheduled_io`.
+        // 使用scheduled_io内存地址作为token，高明！
         if let Err(e) = self.registry.register(source, token, interest.to_mio()) {
             // safety: `scheduled_io` is part of the `registrations` set.
             unsafe {

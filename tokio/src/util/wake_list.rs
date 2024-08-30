@@ -68,6 +68,8 @@ impl WakeList {
             // SAFETY: The resulting pointer is in bounds or one after the length of the same object.
             guard.start = unsafe { guard.start.add(1) };
             // If this panics, then `guard` will clean up the remaining wakers.
+            // 同一个ScheduledIo可能对应多个任务
+            // 需要把这些任务都唤醒
             waker.wake();
         }
     }
